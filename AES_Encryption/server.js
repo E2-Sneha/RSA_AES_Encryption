@@ -1,9 +1,11 @@
 // server.js
 const express = require('express');
 const bodyParser = require('body-parser');
+const multer = require('multer');
 const crypto = require('crypto');
 require('dotenv').config();
 
+const upload = multer();
 const app = express();
 app.use(bodyParser.json());
 
@@ -13,11 +15,12 @@ console.log("Key Length:", key.length);
 // Mock DB
 const mockDB = [];
 
-app.post('/send-data', (req, res) => {
+app.post('/send-data',upload.none(), (req, res) => {
     try {
         const { encryptedData, iv, tag } = req.body;
         const decrypted = decrypt(encryptedData, iv, tag);
-        console.log("Decrypted Data:", decrypted);
+        const decryptedJSON = JSON.parse(decrypted);
+        console.log("Decrypted:", decryptedJSON);
 
         // Store in mock DB
         mockDB.push({
