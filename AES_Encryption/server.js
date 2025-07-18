@@ -33,10 +33,47 @@ app.post('/send-data', (req, res) => {
     }
 });
 
-// Optional: view mock DB
+// view mock DB
 app.get('/mockdb', (req, res) => {
     res.json(mockDB);
 });
+
+app.put('/update/:index', (req, res) => {
+    const index = parseInt(req.params.index);
+    if (index < 0 || index >= mockDB.length) {
+        return res.status(404).json({ error: 'Invalid index' });
+    }
+
+    try {
+        const { encryptedData, iv, tag } = req.body;
+        const decrypted = decrypt(encryptedData, iv, tag);
+
+        mockDB[index] = {
+            raw: decrypted,
+            encrypted: encryptedData,
+            timestamp: new Date()
+        };
+        console.log("Updated item at index", index, ":", mockDB[index]);
+
+        res.json({ message: "Data updated successfully", data: mockDB[index] });
+    } catch (err) {
+        res.status(400).json({ error: 'Update failed', details: err.message });
+    }
+});
+
+app.delete('/delete/:index', (req, res) => {
+    const index = parseInt(req.params.index);
+    if (index < 0 || index >= mockDB.length) {
+        return res.status(404).json({ error: 'Invalid index' });
+    }
+
+    const removed = mockDB.splice(index, 1);
+    console.log("Deleted entry:", removed);
+
+    res.json({ message: "Data deleted successfully", deleted: removed });
+});
+
+
 
 function decrypt(encryptedData, ivHex, tagHex) {
     const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(ivHex, 'hex'));
